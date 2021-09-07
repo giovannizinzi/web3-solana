@@ -1,4 +1,4 @@
-import { Connection, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Connection, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSafeUrl } from "@solana/lib";
 
@@ -24,15 +24,25 @@ export default async function transfer(
     const secretKey = Uint8Array.from(JSON.parse(secret as string));
 
     // Find the parameter to pass  
-    const instructions = SystemProgram.transfer
+    const instructions = SystemProgram.transfer({
+      fromPubkey,
+      toPubkey,
+      lamports,
+    });
 
     // How could you construct a signer array's
-    const signers = 
+    const signers = [
+      { 
+        publicKey: fromPubkey, 
+        secretKey: secretKey
+      }
+    ];
 
     // Maybe adding someting to a Transaction could be interesting ?
-    const transaction = new Transaction()
+    const transaction = new Transaction().add(instructions);
 
-    const hash =// You should now what is expected here.
+    const hash = await sendAndConfirmTransaction(connection, transaction, signers)
+
     res.status(200).json(hash);
   } catch (error) {
     console.log(error);

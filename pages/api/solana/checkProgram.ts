@@ -15,8 +15,8 @@ export default async function checkProgram(
     const programId = req.body.programId as PublicKey;
     const url = getSafeUrl();
     const connection = new Connection(url, "confirmed");
-    const publicKey = undefined;
-    const programInfo = undefined;
+    const publicKey = new PublicKey(programId);
+    const programInfo = await connection.getAccountInfo(publicKey);
 
     if (programInfo === null) {
         if (fs.existsSync(PROGRAM_SO_PATH)) {
@@ -29,6 +29,7 @@ export default async function checkProgram(
     } else if (!programInfo.executable) {
       throw new Error(`Program is not executable`);
     }
+    // above should check if program is exeecutable. i.e., if it is not then the error is thrown
 
     res.status(200).json(true);
   } catch(error) {

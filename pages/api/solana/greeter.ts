@@ -37,12 +37,13 @@ export default async function greeter(
     const connection = new Connection(url, "confirmed");
 
     const programId = new PublicKey(req.body.programId as string);
+    //payer generates public and private key (hence keypair) which can be used as signer
     const payer = Keypair.fromSecretKey(new Uint8Array(JSON.parse(req.body.secret as string)));
 
     const GREETING_SEED = 'hello';
 
     // Is there any methods from PublicKey allowing to derive a pub's key from a seed ?
-    const greetedPubkey = await PublicKey.undefined  
+    const greetedPubkey = await PublicKey.createWithSeed(payer.publicKey, GREETING_SEED, programId)
 
     // This function allow to calculate how many fees one have to pay to keep the newly 
     // created account alive on the blockchain.
@@ -50,11 +51,20 @@ export default async function greeter(
 
     // Find which method are expected and fill with the required arguements.
     const transaction = new Transaction().add(
-        SystemProgram.undefined
+        SystemProgram.createAccountWithSeed({
+          basePubkey: payer.publicKey,
+          fromPubkey: payer.publicKey,
+          lamports: lamports,
+          newAccountPubkey: greetedPubkey,
+          programId: programId,
+          seed: GREETING_SEED,
+          space: GREETING_SIZE
+          }
+        )
     );
     
     // complete with the expected arguments 
-    const hash = await sendAndConfirmTransaction(undefined)
+    const hash = await sendAndConfirmTransaction(connection, transaction, [payer])
     res.status(200).json({
         hash: hash, 
         greeter: greetedPubkey.toBase58()
